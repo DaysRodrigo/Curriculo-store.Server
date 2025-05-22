@@ -38,7 +38,7 @@ namespace Curriculo_store.Server.Controllers
             }
 
             if ((produto.Tipo == TipoProduto.Curso && string.IsNullOrWhiteSpace(produto.FileUrl)) ||
-                (produto.Tipo == TipoProduto.Acadêmico && string.IsNullOrWhiteSpace(produto.FileUrl)))
+                (produto.Tipo == TipoProduto.Academico && string.IsNullOrWhiteSpace(produto.FileUrl)))
             {
                 return BadRequest("Para este tipo, é necessário fornecer um arquivo.");
             }
