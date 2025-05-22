@@ -1,0 +1,2 @@
+[build]
+nixpacksPlan = "dotnet-aspnet-8.0"
