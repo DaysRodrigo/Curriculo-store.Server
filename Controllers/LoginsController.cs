@@ -7,8 +7,6 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using StackExchange.Redis;
-using Curriculo_store.Server.Services;
 
 namespace Curriculo_store.Server.Controllers
 {
@@ -20,14 +18,12 @@ namespace Curriculo_store.Server.Controllers
         private readonly UserManager<UserCrt> _userManager;
         private readonly SignInManager<UserCrt> _signInManager;
         private readonly IConfiguration _configuration;
-        private readonly RedisService _redis;
 
-        public LoginController(UserManager<UserCrt> userManager, SignInManager<UserCrt> signInManager, IConfiguration configuration, RedisService redis)
+        public LoginController(UserManager<UserCrt> userManager, SignInManager<UserCrt> signInManager, IConfiguration configuration)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _configuration = configuration;
-            _redis = redis;
         }
 
         //LOGIN - POST: api/login
@@ -69,11 +65,10 @@ namespace Curriculo_store.Server.Controllers
                     issuer: _configuration["Jwt:Issuer"],
                     audience: _configuration["Jwt:Audience"],
                     claims: claims,
-                    expires: DateTime.UtcNow.AddHours(3),
+                    expires: DateTime.UtcNow.AddMinutes(3),
                     signingCredentials: creds
                 );
                 var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
-                await _redis.SetTokenAsync(tokenString, "valid", TimeSpan.FromHours(3));
 
                 return Ok(new ResponseLogin
                 {
