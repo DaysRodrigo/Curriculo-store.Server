@@ -1,2 +1,8 @@
 [build]
-nixpacksPlan = "dotnet-aspnet-8.0"
+builder = "NIXPACKS"
+
+[nixpacks]
+languages = ["dotnet"]
+
+[nixpacks.dotnet]
+version = "8.0"
