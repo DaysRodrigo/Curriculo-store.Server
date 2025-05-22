@@ -1,8 +1,8 @@
 [build]
-builder = "docker"
+builder = "DOCKERFILE"
 
-[nixpacks]
-languages = ["dotnet"]
+# [nixpacks]
+# languages = ["dotnet"]
 
-[nixpacks.dotnet]
-version = "8.0"
+# [nixpacks.dotnet]
+# version = "8.0"
