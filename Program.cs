@@ -5,7 +5,12 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-
+using StackExchange.Redis;
+using Curriculo_store.Server.Services;
+using Amazon;
+using Amazon.S3;
+using Amazon.Extensions.NETCore.Setup;
+using Amazon.Runtime;
 
 var builder = WebApplication.CreateBuilder(args);
 var jwtKey = builder.Configuration["Jwt:Key"];
@@ -18,6 +23,14 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddIdentity<UserCrt, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    var configuration = builder.Configuration.GetValue<string>("RedisConnection");
+    return ConnectionMultiplexer.Connect(configuration);
+});
+
+builder.Services.AddSingleton<RedisService>();
 
 builder.Services.AddAuthentication(options =>
 {
@@ -39,6 +52,19 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
+builder.Services.AddScoped<S3Service>();
+
+
+builder.Services.AddDefaultAWSOptions(new AWSOptions
+{
+    Credentials = new Amazon.Runtime.BasicAWSCredentials(
+        builder.Configuration["AWS:AccessKey"],
+        builder.Configuration["AWS:SecretKey"]
+        ),
+    Region = RegionEndpoint.GetBySystemName(builder.Configuration["AWS:Region"])
+});
+
+builder.Services.AddAWSService<IAmazonS3>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

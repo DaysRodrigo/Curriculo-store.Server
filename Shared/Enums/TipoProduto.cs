@@ -6,6 +6,7 @@ namespace Curriculo_store.Server.Shared.Enums
     {
         Curso,
         Experiência,
-        Acadêmico
+        Acadêmico,
+        Outro
     }
 }

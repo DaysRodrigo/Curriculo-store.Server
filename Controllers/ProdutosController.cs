@@ -40,7 +40,7 @@ namespace Curriculo_store.Server.Controllers
             if ((produto.Tipo == TipoProduto.Curso && string.IsNullOrWhiteSpace(produto.FileUrl)) ||
                 (produto.Tipo == TipoProduto.Acadêmico && string.IsNullOrWhiteSpace(produto.FileUrl)))
             {
-                return BadRequest("Para o tipo Curso, é necessário fornecer um arquivo.");
+                return BadRequest("Para este tipo, é necessário fornecer um arquivo.");
             }
 
             _context.Produtos.Add(produto);
@@ -176,9 +176,8 @@ namespace Curriculo_store.Server.Controllers
 
             await _context.SaveChangesAsync();
 
-            return Ok("Produto excluído com sucesso.");
-
-
+            //return Ok("Produto excluído com sucesso." );
+            return Ok(new { mensagem = "Produto excluído com sucesso." });
         }
     }
 }

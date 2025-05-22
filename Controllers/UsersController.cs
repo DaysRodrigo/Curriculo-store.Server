@@ -18,7 +18,7 @@ namespace Curriculo_store.Server.Controllers
             _userManager = userManager;
         }
 
-        //CREATE - POST
+        //CREATE - POST : api/users
         [Authorize(Roles = "Master")]
         [HttpPost]
         public async Task<IActionResult> CreateUser([FromBody] RegisterUser dto)

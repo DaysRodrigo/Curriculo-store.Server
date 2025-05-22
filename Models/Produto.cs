@@ -9,7 +9,7 @@ namespace Curriculo_store.Server.Models
         public int Id { get; set; }
 
         [Required(ErrorMessage = "O nome é obrigatório.")]
-        [StringLength(25, MinimumLength = 2 , ErrorMessage = "O nome deve ter no máximo 100 caracteres.")]
+        [StringLength(100, MinimumLength = 2 , ErrorMessage = "O nome deve ter no máximo 100 caracteres.")]
 
         public string Nome { get; set; } = string.Empty;
 
