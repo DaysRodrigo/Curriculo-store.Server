@@ -64,6 +64,28 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+    try
+    {
+        var canConnect = dbContext.Database.CanConnect();
+        if (!canConnect)
+        {
+            Console.WriteLine("Não foi possível conectar ao banco de dados.");
+        }
+        else
+        {
+            Console.WriteLine("Conexão com o banco de dados OK.");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine("Erro ao tentar conectar ao banco: " + ex.Message);
+    }
+}
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 }
 app.UseDefaultFiles();
 app.UseStaticFiles();
