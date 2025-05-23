@@ -23,7 +23,7 @@ builder.Services.AddCors(options =>
                       policy =>
                       {
                           policy.WithOrigins(
-                              "https://curriculo-store-client-rkykgb49z-rodrigo-dias-projects.vercel.app",
+                              "https://curriculo-store-client.vercel.app",
                               "http://localhost:5173"
                           )
                           .AllowAnyHeader()
