@@ -16,13 +16,11 @@ namespace Curriculo_store.Server.Controllers
     public class LoginController : ControllerBase
     {
         private readonly UserManager<UserCrt> _userManager;
-        private readonly SignInManager<UserCrt> _signInManager;
         private readonly IConfiguration _configuration;
 
-        public LoginController(UserManager<UserCrt> userManager, SignInManager<UserCrt> signInManager, IConfiguration configuration)
+        public LoginController(UserManager<UserCrt> userManager, IConfiguration configuration)
         {
             _userManager = userManager;
-            _signInManager = signInManager;
             _configuration = configuration;
         }
 
@@ -37,19 +35,20 @@ namespace Curriculo_store.Server.Controllers
             }
 
             var user = await _userManager.FindByEmailAsync(request.Email);
+            Console.WriteLine($"FindByEmailAsync result: {user}");
 
             if (user == null)
             {
                 return Unauthorized("Usuário não encontrado.");
             }
 
-            var result = await _signInManager.PasswordSignInAsync(user, request.Password, false, false);
-            if (!result.Succeeded)
+            var result = await _userManager.CheckPasswordAsync(user, request.Password);
+            if (!result)
             {
                 return Unauthorized("Usuário ou senha incorretos.");
             }
 
-            if (result.Succeeded)
+            if ( result )
             {
                 var claims = new[]
                 {
