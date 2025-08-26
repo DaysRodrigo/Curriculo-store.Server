@@ -64,7 +64,7 @@ namespace Curriculo_store.Server.Controllers
                     issuer: _configuration["Jwt:Issuer"],
                     audience: _configuration["Jwt:Audience"],
                     claims: claims,
-                    expires: DateTime.UtcNow.AddMinutes(3),
+                    expires: DateTime.UtcNow.AddHours(3),
                     signingCredentials: creds
                 );
                 var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
