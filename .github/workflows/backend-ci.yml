@@ -44,7 +44,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t backend:test .
+          docker build -t backend:test -f Curriculo-store.Server/src/Dockerfile Curriculo-store.Server/src
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
