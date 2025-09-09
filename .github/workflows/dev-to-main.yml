@@ -21,4 +21,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           source_branch: dev
           target_branch: main
-          merge_method: merge  # pode ser merge, squash ou rebase
+          merge_method: merge  # teste para ver se está rodando
