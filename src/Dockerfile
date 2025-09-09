@@ -16,6 +16,9 @@ RUN dotnet publish "Curriculo-store.Server.csproj" -c Release -o /app/publish /p
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 
+# Atualiza os pacotes do sistema para corrigir vulnerabilidades conhecidas
+RUN apt-get update && apt-get upgrade -y && apt-get clean && rm -rf /var/lib/apt/lists/*
+
 # Copia os arquivos publicados do estágio de build
 COPY --from=build /app/publish .
 
