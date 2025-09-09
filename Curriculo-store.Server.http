@@ -1,6 +1,0 @@
-@Curriculo_store.Server_HostAddress = http://localhost:5285
-
-GET {{Curriculo_store.Server_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

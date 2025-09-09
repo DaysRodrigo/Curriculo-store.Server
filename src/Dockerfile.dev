@@ -12,8 +12,14 @@ COPY . .
 # Builda e publica para uma pasta 'out'
 RUN dotnet restore "Curriculo-store.Server.csproj"
 
-# Expõe a porta 80
-EXPOSE 5000
+# Expõe a porta 5001
+#EXPOSE 5001
 
 # Rodando com hot-reload
-ENTRYPOINT ["dotnet", "watch", "run", "--urls", "http://0.0.0.0:5000"]
+#ENTRYPOINT ["dotnet", "watch", "run", "--urls", "http://0.0.0.0:5001"]
+
+# Garante que o ASP.NET Core rode na 5001
+ENV ASPNETCORE_URLS=http://+:5001
+
+# Rodando com hot-reload
+ENTRYPOINT ["dotnet", "watch", "run", "--no-launch-profile"]
