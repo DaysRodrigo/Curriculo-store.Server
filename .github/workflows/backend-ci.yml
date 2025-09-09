@@ -25,11 +25,11 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore src/Curriculo-store.csproj
+        run: dotnet restore Curriculosrc/Curriculo-store.Server.csproj
 
 
       - name: Build
-        run: dotnet build src/Curriculo-store.csproj --configuration Release --no-restore
+        run: dotnet build src/Curriculo-store.Server.csproj --configuration Release --no-restore
 
 
       - name: Test
