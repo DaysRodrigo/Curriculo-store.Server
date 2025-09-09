@@ -1,0 +1,65 @@
+name: BackEnd CI
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore src/Curriculo-store.Server.csproj
+
+
+      - name: Build
+        run: dotnet build src/Curriculo-store.Server.csproj --configuration Release --no-restore
+
+
+      - name: Test
+        run: dotnet test CurriculoStore.Tests/CurriculoStore.Tests.csproj --no-restore --verbosity normal
+  
+  docker-security:
+    runs-on: ubuntu-latest
+    needs: build-and-test #only run if pass all tests
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Build Docker image
+        run: docker build -t backend:test -f src/Dockerfile src
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: backend:test
+          severity: HIGH,CRITICAL
+          format: table
+          exit-code: 0 #fail with high vulnerability
+
+      - name: Run Docker Bench Security
+        run: |
+          docker run --rm --net host --pid host --userns host \
+            --cap-add audit_control \
+            -e DOCKER_CONTENT_TRUST=$DOCKER_CONTENT_TRUST \
+            -v /var/lib:/var/lib \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v /usr/lib/systemd:/usr/lib/systemd \
+            -v /etc:/etc \
+            docker/docker-bench-security

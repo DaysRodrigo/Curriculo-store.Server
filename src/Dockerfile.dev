@@ -1,0 +1,25 @@
+# Build stage
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Copia os arquivos csproj e restaura as dependências
+COPY ["Curriculo-store.Server.csproj", "./"]
+RUN dotnet restore "./Curriculo-store.Server.csproj"
+
+# Copia o resto do código
+COPY . .
+
+# Builda e publica para uma pasta 'out'
+RUN dotnet restore "Curriculo-store.Server.csproj"
+
+# Expõe a porta 5001
+#EXPOSE 5001
+
+# Rodando com hot-reload
+#ENTRYPOINT ["dotnet", "watch", "run", "--urls", "http://0.0.0.0:5001"]
+
+# Garante que o ASP.NET Core rode na 5001
+ENV ASPNETCORE_URLS=http://+:5001
+
+# Rodando com hot-reload
+ENTRYPOINT ["dotnet", "watch", "run", "--no-launch-profile"]
