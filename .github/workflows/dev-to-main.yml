@@ -16,7 +16,7 @@ jobs:
 
       # Merge automático da dev para main
       - name: Merge dev into main
-        uses: devops-infra/action-pull-request@v0.3.3
+        uses: devops-infra/action-pull-request@v0.6
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           source_branch: dev
