@@ -19,7 +19,7 @@ jobs:
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.1
         with:
-          ssh-private-key: ${{ secrets.AWS_VM_SSH_KEY }}
+          ssh-private-key: ${{ secrets.AWS_VM_KEY }}
 
       - name: Deploy to AWS
         run: |
