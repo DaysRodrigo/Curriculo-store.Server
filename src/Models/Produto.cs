@@ -39,15 +39,6 @@ namespace Curriculo_store.Server.Models
 
         public string Tecnologias { get; set; } = string.Empty;
 
-        [NotMapped]
-        public List<string> TecnologiasList
-        {
-            get => string.IsNullOrEmpty(Tecnologias)
-                ? new List<string>()
-                : JsonSerializer.Deserialize<List<string>>(Tecnologias)!;
-            set => Tecnologias = JsonSerializer.Serialize(value);
-        }
-
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime? UpdatedAt { get; set; }
