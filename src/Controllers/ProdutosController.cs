@@ -95,6 +95,7 @@ namespace Curriculo_store.Server.Controllers
         {
             var produtos = await _context.Produtos
                 .Where(p => p.DeletedAt == null)
+                .AsNoTracking()
                 .ToListAsync();
 
             if (produtos == null || produtos.Count == 0)
