@@ -3,6 +3,8 @@ using Curriculo_store.Server.Shared.Enums;
 using Curriculo_store.Server.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Curriculo_store.Server.Models.Dtos;
 
 namespace Curriculo_store.Server.Controllers
 {
@@ -21,11 +23,12 @@ namespace Curriculo_store.Server.Controllers
         //CREATE - POST: api/produtos
         [HttpPost]
 
-        public async Task<IActionResult> CreateProduto([FromBody] Produto produto)
+        public async Task<IActionResult> CreateProduto([FromBody] ProdutoUpdateDto produto)
         {
+            var toCrt = new Produto();
             if (produto == null)
             {
-                return BadRequest("Produto inválido.");
+                return BadRequest("Produto invÃ¡lido.");
             }
 
             var existe = await _context.Produtos
@@ -34,19 +37,40 @@ namespace Curriculo_store.Server.Controllers
 
             if (existe)
             {
-                return Conflict("Este produto já existe.");
+                return Conflict("Este produto jÃ¡ existe.");
             }
 
             if ((produto.Tipo == TipoProduto.Curso && string.IsNullOrWhiteSpace(produto.FileUrl)) ||
                 (produto.Tipo == TipoProduto.Academico && string.IsNullOrWhiteSpace(produto.FileUrl)))
             {
-                return BadRequest("Para este tipo, é necessário fornecer um arquivo.");
+                return BadRequest("Para este tipo, Ã© necessÃ¡rio fornecer um arquivo.");
+            }
+            else
+            {
+                toCrt.Nome = produto.Nome;
+                toCrt.Tipo = produto.Tipo;
+                toCrt.Descricao = produto.Descricao;
+                toCrt.Periodo = produto.Periodo;
+                toCrt.FileUrl = produto.FileUrl;
+                toCrt.Valor = produto.Valor;
+                toCrt.Instituicao = produto.Instituicao;
             }
 
-            _context.Produtos.Add(produto);
+            if (produto.Tecnologias.IsNullOrEmpty())
+            {
+                return BadRequest("Ã‰ necessÃ¡rio definir as tecnologias.");
+            }
+            else
+            {
+                var teste = string.Join(", ", produto.Tecnologias);
+
+                toCrt.Tecnologias = teste;
+            }
+
+            _context.Produtos.Add(toCrt);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction( nameof(GetProdutoById), new { id = produto.Id }, produto);
+            return CreatedAtAction(nameof(GetProdutoById), new { id = toCrt.Id }, toCrt);
         }
 
         //READ ONE - GET: api/produtos/{id}
@@ -56,7 +80,7 @@ namespace Curriculo_store.Server.Controllers
         {
             var produto = await _context.Produtos.FindAsync(id);
 
-            if ( produto == null )
+            if (produto == null)
             {
                 return NotFound();
             }
@@ -73,46 +97,92 @@ namespace Curriculo_store.Server.Controllers
                 .Where(p => p.DeletedAt == null)
                 .ToListAsync();
 
-            if ( produtos == null || produtos.Count == 0 )
+            if (produtos == null || produtos.Count == 0)
             {
                 return NoContent();
             }
 
-            return Ok( produtos );
+            return Ok(produtos);
         }
 
         //UPDATE BY ID - PUT: api/produtos/{id}
 
         [HttpPut("{id}")]
 
-        public async Task<ActionResult<Produto>> UpdateProdutoById(int id, [FromBody] Produto updatedProduto)
+        public async Task<ActionResult<Produto>> UpdateProdutoById(int id, [FromBody] ProdutoUpdateDto updatedProduto)
         {
             var produto = await _context.Produtos.FindAsync(id);
 
-            if ( produto == null )
+            if (produto == null)
             {
                 return NotFound();
             }
 
             if (produto.DeletedAt != null)
             {
-                return BadRequest("Não é possível atualizar um produto excluído.");
+                return BadRequest("NÃ£o Ã© possÃ­vel atualizar um produto excluÃ­do.");
             }
 
 
-            if ( produto.Nome.Trim() != updatedProduto.Nome.Trim() ||
-                produto.Tipo != updatedProduto.Tipo ||
-                produto.Descricao.Trim() != updatedProduto.Descricao.Trim() ||
-                produto.FileUrl.Trim() != updatedProduto.FileUrl.Trim())
+            bool hasChanges = false;
+
+            bool UpdateIfChanged(string original, string updated, Action<string> setter)
             {
-                produto.Nome = updatedProduto.Nome;
-                produto.Tipo = updatedProduto.Tipo;
-                produto.Descricao = updatedProduto.Descricao;
-                produto.FileUrl = updatedProduto.FileUrl;
-                produto.UpdatedAt = DateTime.UtcNow;
+                var originalTrimmed = original?.Trim() ?? string.Empty;
+                var updatedTrimmed = updated?.Trim() ?? string.Empty;
+
+                if (originalTrimmed != updatedTrimmed)
+                {
+                    setter(updated);
+                    return true;
+                }
+                return false;
             }
 
-            await _context.SaveChangesAsync();
+            bool TecnologiasChanged(string originalString, List<string> updatedArray)
+            {
+                var originalList = originalString?
+                    .Split(',')
+                    .Select(t => t.Trim())
+                    .Where(t => !string.IsNullOrEmpty(t))
+                    .ToList() ?? new List<string>();
+
+                var sortedOriginal = originalList.OrderBy(t => t).ToList();
+                var sortedUpdated = updatedArray.OrderBy(t => t).ToList();
+
+                return !sortedOriginal.SequenceEqual(sortedUpdated);
+            }
+
+
+            hasChanges |= UpdateIfChanged(produto.Nome, updatedProduto.Nome, value => produto.Nome = value);
+            hasChanges |= UpdateIfChanged(produto.Descricao, updatedProduto.Descricao, value => produto.Descricao = value);
+            hasChanges |= UpdateIfChanged(produto.FileUrl, updatedProduto.FileUrl, value => produto.FileUrl = value);
+            hasChanges |= UpdateIfChanged(produto.Instituicao, updatedProduto.Instituicao, value => produto.Instituicao = value);
+            hasChanges |= UpdateIfChanged(produto.Periodo, updatedProduto.Periodo, value => produto.Periodo = value);
+            hasChanges |= TecnologiasChanged(produto.Tecnologias, updatedProduto.Tecnologias);
+
+            if (hasChanges)
+            {
+                produto.Tecnologias = string.Join(", ", updatedProduto.Tecnologias);
+            }
+
+            if (produto.Tipo != updatedProduto.Tipo)
+            {
+                produto.Tipo = updatedProduto.Tipo;
+                hasChanges = true;
+            }
+
+            if (produto.Valor != updatedProduto.Valor)
+            {
+                produto.Valor = updatedProduto.Valor;
+                hasChanges = true;
+            }
+
+            if (hasChanges)
+            {
+                produto.UpdatedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+            }
 
             return Ok(produto);
         }
@@ -121,12 +191,12 @@ namespace Curriculo_store.Server.Controllers
 
         [HttpPut("all")]
 
-        public async Task<IActionResult> UpdateProdutos([FromBody] List<Produto> updatedProdutos)
+        public async Task<IActionResult> UpdateProdutos([FromBody] List<ProdutoUpdateDto> updatedProdutos)
         {
-            var ids = updatedProdutos.Select( p =>  p.Id ).ToList();
+            var ids = updatedProdutos.Select(p => p.Id).ToList();
 
             var databaseProdutos = await _context.Produtos
-                .Where( p => ids.Contains( p.Id ) && p.DeletedAt == null)
+                .Where(p => ids.Contains(p.Id) && p.DeletedAt == null)
                 .ToListAsync();
 
 
@@ -135,28 +205,80 @@ namespace Curriculo_store.Server.Controllers
                 return NotFound("Nenhum produto localizado com os id's fornecidos.");
             }
 
-            foreach ( var updated in updatedProdutos )
+            bool globalHasChanges = false;
+
+
+            foreach (var updated in updatedProdutos)
             {
 
-                var exist = databaseProdutos.FirstOrDefault( p => p.Id == updated.Id );
+                var exist = databaseProdutos.FirstOrDefault(p => p.Id == updated.Id);
+                bool hasChanges = false;
 
-                if (exist == null) continue;
+                bool UpdateIfChanged(string original, string updated, Action<string> setter)
+                {
+                    var originalTrimmed = original?.Trim() ?? string.Empty;
+                    var updatedTrimmed = updated?.Trim() ?? string.Empty;
 
-                    if (exist.Nome.Trim() != updated.Nome.Trim() ||
-                        exist.Tipo != updated.Tipo ||
-                        exist.Descricao.Trim() != updated.Descricao.Trim() ||
-                        exist.FileUrl.Trim() != updated.FileUrl.Trim())
+                    if (originalTrimmed != updatedTrimmed)
                     {
-                        exist.Nome = updated.Nome;
-                        exist.Tipo = updated.Tipo;
-                        exist.Descricao = updated.Descricao;
-                        exist.FileUrl = updated.FileUrl;
-                        exist.UpdatedAt = DateTime.UtcNow;
+                        setter(updated);
+                        return true;
                     }
+                    return false;
+                }
+
+                bool TecnologiasChanged(string originalString, List<string> updatedArray)
+                {
+                    var originalList = originalString?
+                        .Split(',')
+                        .Select(t => t.Trim())
+                        .Where(t => !string.IsNullOrEmpty(t))
+                        .ToList() ?? new List<string>();
+
+                    var sortedOriginal = originalList.OrderBy(t => t).ToList();
+                    var sortedUpdated = updatedArray.OrderBy(t => t).ToList();
+
+                    return !sortedOriginal.SequenceEqual(sortedUpdated);
+                }
+
+                hasChanges |= UpdateIfChanged(exist.Nome, updated.Nome, value => exist.Nome = value);
+                hasChanges |= UpdateIfChanged(exist.Descricao, updated.Descricao, value => exist.Descricao = value);
+                hasChanges |= UpdateIfChanged(exist.FileUrl, updated.FileUrl, value => exist.FileUrl = value);
+                hasChanges |= UpdateIfChanged(exist.Instituicao, updated.Instituicao, value => exist.Instituicao = value);
+                hasChanges |= UpdateIfChanged(exist.Periodo, updated.Periodo, value => exist.Periodo = value);
+                hasChanges |= TecnologiasChanged(exist.Tecnologias, updated.Tecnologias);
+
+                if (hasChanges)
+                {
+                    exist.Tecnologias = string.Join(", ", updated.Tecnologias);
+                }
+
+                if (exist.Tipo != updated.Tipo)
+                {
+                    exist.Tipo = updated.Tipo;
+                    hasChanges = true;
+                }
+
+                if (exist.Valor != updated.Valor)
+                {
+                    exist.Valor = updated.Valor;
+                    hasChanges = true;
+                }
+
+                if (hasChanges)
+                {
+                    exist.UpdatedAt = DateTime.UtcNow;
+                    globalHasChanges = true;
+                }
             }
 
-            await _context.SaveChangesAsync();
-            return Ok("Produtos atualizados com sucesso.");
+            if (globalHasChanges)
+            {
+                await _context.SaveChangesAsync();
+                return Ok("Produtos atualizados com sucesso.");
+            }
+
+            return Ok("Nenhuma alteraÃ§Ã£o detectada.");
         }
 
         //DELETE - DELETE: api/produtos/{id}
@@ -166,7 +288,7 @@ namespace Curriculo_store.Server.Controllers
         public async Task<IActionResult> DeleteProdutoById(int id)
         {
             var produto = await _context.Produtos.FindAsync(id);
-            if ( produto == null )
+            if (produto == null)
             {
                 return NotFound();
             }
@@ -176,8 +298,8 @@ namespace Curriculo_store.Server.Controllers
 
             await _context.SaveChangesAsync();
 
-            //return Ok("Produto excluído com sucesso." );
-            return Ok(new { mensagem = "Produto excluído com sucesso." });
+            //return Ok("Produto excluï¿½do com sucesso." );
+            return Ok(new { mensagem = "Produto excluï¿½do com sucesso." });
         }
     }
 }

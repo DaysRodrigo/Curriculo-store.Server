@@ -26,12 +26,12 @@ namespace Curriculo_store.Server.Controllers
 
         //LOGIN - POST: api/login
         [HttpPost]
-
+        [RequireHttps]
         public async Task<IActionResult> Login([FromBody] LoginUser request)
         {
             if (request.Email == null || request.Password == null)
             {
-                return BadRequest("Email e senha são obrigatórios.");
+                return BadRequest("Email e senha sï¿½o obrigatï¿½rios.");
             }
 
             var user = await _userManager.FindByEmailAsync(request.Email);
@@ -39,16 +39,16 @@ namespace Curriculo_store.Server.Controllers
 
             if (user == null)
             {
-                return Unauthorized("Usuário não encontrado.");
+                return Unauthorized("Usuï¿½rio nï¿½o encontrado.");
             }
 
             var result = await _userManager.CheckPasswordAsync(user, request.Password);
             if (!result)
             {
-                return Unauthorized("Usuário ou senha incorretos.");
+                return Unauthorized("Usuï¿½rio ou senha incorretos.");
             }
 
-            if ( result )
+            if (result)
             {
                 var claims = new[]
                 {
@@ -74,13 +74,13 @@ namespace Curriculo_store.Server.Controllers
                     Name = user.Name,
                     Email = user.Email!,
                     Tipo = user.Tipo,
-                    Message = $"Sejá bem vindo {user.Name}",
+                    Message = $"Sejï¿½ bem vindo {user.Name}",
                     Token = tokenString
                 });
             }
             else
             {
-                return Unauthorized("Usuário ou senha incorretos.");
+                return Unauthorized("Usuï¿½rio ou senha incorretos.");
             }
 
         }
