@@ -14,13 +14,17 @@ public class S3Service
         _s3Client = s3Client;
         _bucketName = configuration["AWS:BucketName"];
     }
-    
+
     public string GeneratePreSignedUploadUrl(string fileName, string contentType)
     {
+        var extension = System.IO.Path.GetExtension(fileName);
+        var randomName = Guid.NewGuid().ToString();
+        var newName = randomName + extension;
+
         var request = new GetPreSignedUrlRequest
         {
             BucketName = _bucketName,
-            Key = fileName,
+            Key = newName,
             Verb = HttpVerb.PUT,
             ContentType = contentType,
             Expires = DateTime.UtcNow.AddMinutes(_expiresInMinutes)
@@ -30,8 +34,8 @@ public class S3Service
         return url;
     }
 
-    public string GetPublicUrl(string fileName)
+    public string GetPublicUrl(string newName)
     {
-        return $"https://{_bucketName}.s3.amazonaws.com/{fileName}";
+        return $"https://{_bucketName}.s3.amazonaws.com/{newName}";
     }
 }
